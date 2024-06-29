@@ -1,0 +1,35 @@
+/* src/assets/styles/custom.css */
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.card-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+.btn-primary {
+    background-color: #6c757d;
+    border: none;
+}
+
+.btn-outline-primary {
+    border: 1px solid #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-primary:hover {
+    background-color: #6c757d;
+    color: white;
+}

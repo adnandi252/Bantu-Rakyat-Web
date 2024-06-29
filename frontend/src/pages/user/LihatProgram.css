@@ -1,0 +1,24 @@
+.program-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .program-card .card-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  
+  .program-card .card-title {
+    flex-grow: 0;
+  }
+  
+  .program-card .card-text {
+    flex-grow: 1;
+  }
+  
+  .program-card .btn {
+    align-self: flex-end;
+  }
+  
