@@ -3,12 +3,34 @@ from app.model.penerima_manfaat import PenerimaManfaat
 from app.model.jenis_bantuan import JenisBantuan
 from app.model.jadwal_penyaluran import JadwalPenyaluran
 from app.model.user import User
+from app.model.profile import Profile
 from app import db
 from sqlalchemy.sql import func
-from sqlalchemy.orm import aliased
+from werkzeug.utils import secure_filename
+import os
+from app import app
+from sqlalchemy.orm import joinedload
 
 
 class UserController:
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+
+    @staticmethod
+    def upload_file():
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}), 400
+
+        if file:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            return jsonify({'fileUrl': f'/uploads/{filename}'}), 200
+    
     @staticmethod
     def get_dashboard_data(id):
         total_packages = db.session.query(
@@ -58,21 +80,86 @@ class UserController:
         return jsonify(programs_data)
 
     @staticmethod
+    def get_profile(id):
+        try:
+            user = db.session.query(User).outerjoin(Profile).filter(User.id == id).options(joinedload(User.profile)).first()
+
+            if user is None:
+                return jsonify({'message': 'Profile tidak ditemukan'})
+
+            profile = user.profile[0] if user.profile else None
+
+            return jsonify({
+                'nik': user.nik,
+                'nama': user.nama,
+                'email': user.email,
+                'foto': profile.foto if profile else '',
+                'tempat_lahir': profile.tempat_lahir if profile else '',
+                'tanggal_lahir': profile.tanggal_lahir if profile else '',
+                'telepon': profile.telepon if profile else '',
+                'provinsi': profile.provinsi if profile else '',
+                'pekerjaan': profile.pekerjaan if profile else '',
+                'penghasilan': profile.penghasilan if profile else '',
+                'rekening': profile.rekening if profile else '',
+                'alamat': profile.alamat if profile else '',
+            })
+        except Exception as e:
+            return jsonify({
+                'message': f'Error: {str(e)}'
+            }), 500
+
+    @staticmethod
+    def post_profile(id):
+        data = request.json
+
+        try:
+            profile = Profile.query.filter_by(userId=id).first()
+
+            if profile:
+                profile.foto = data['foto']
+                profile.tempat_lahir = data['tempat_lahir']
+                profile.tanggal_lahir = data['tanggal_lahir']
+                profile.telepon = data['telepon']
+                profile.provinsi = data['provinsi']
+                profile.pekerjaan = data['pekerjaan']
+                profile.penghasilan = data['penghasilan']
+                profile.rekening = data['rekening']
+                profile.alamat = data['alamat']
+            else:
+                profile = Profile(
+                    userId=id,
+                    foto=data['foto'],
+                    tempat_lahir=data['tempat_lahir'],
+                    tanggal_lahir=data['tanggal_lahir'],
+                    telepon=data['telepon'],
+                    provinsi=data['provinsi'],
+                    pekerjaan=data['pekerjaan'],
+                    penghasilan=data['penghasilan'],
+                    rekening=data['rekening'],
+                    alamat=data['alamat'],
+                )
+                db.session.add(profile)
+
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Profile berhasil ditambahkan atau diperbarui'
+            }), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({
+                'message': f'Error: {str(e)}'
+            }), 500
+        
+    @staticmethod
     def post_penerima_manfaat(id):
         data = request.json
         penerima_manfaat = PenerimaManfaat(
             userId=id,
             jenisBantuanId=data['jenisBantuanId'],
-            tempat_lahir=data['tempat_lahir'],
-            tanggal_lahir=data['tanggal_lahir'],
-            telepon=data['telepon'],
-            provinsi=data['provinsi'],
-            pekerjaan=data['pekerjaan'],
-            penghasilan=data['penghasilan'],
-            rekening=data['rekening'],
             dokumen=data['dokumen'],
-            alamat=data['alamat'],
-            status='belum diverifikasi'
+            status='belum diverifikasi',
+            keterangan='',
         )
 
         db.session.add(penerima_manfaat)
@@ -89,17 +176,7 @@ class UserController:
 
         penerima_manfaat = PenerimaManfaat.query.filter_by(id=id).first()
 
-        penerima_manfaat.tempat_lahir = data['tempat_lahir']
-        penerima_manfaat.tanggal_lahir = data['tanggal_lahir']
-        penerima_manfaat.telepon = data['telepon']
-        penerima_manfaat.provinsi = data['provinsi']
-        penerima_manfaat.pekerjaan = data['pekerjaan']
-        penerima_manfaat.penghasilan = data['penghasilan']
-        penerima_manfaat.rekening = data['rekening']
         penerima_manfaat.dokumen = data['dokumen']
-        penerima_manfaat.alamat = data['alamat']
-        penerima_manfaat.jenisBantuanId = data['jenisBantuanId']
-
         db.session.commit()
 
         return jsonify({

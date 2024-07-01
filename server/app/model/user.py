@@ -12,5 +12,6 @@ class User(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     penerima_manfaat = db.relationship('PenerimaManfaat', backref='user', lazy=True, cascade='all, delete')
+    profile = db.relationship('Profile', backref='user', lazy=True, cascade='all, delete')
     def __repr__(self):
         return f'<User {self.nama}>'

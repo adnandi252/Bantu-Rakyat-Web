@@ -3,6 +3,7 @@ from app.model.penerima_manfaat import PenerimaManfaat
 from app.model.jenis_bantuan import JenisBantuan
 from app.model.jadwal_penyaluran import JadwalPenyaluran
 from app.model.user import User
+from app.model.profile import Profile
 from app import db
 from sqlalchemy.sql import func
 from sqlalchemy.orm import aliased
@@ -87,9 +88,11 @@ class AdminController:
     @staticmethod
     def get_data_verifikasi_penerima_manfaat():
         query = db.session.query(
-            User, PenerimaManfaat, JenisBantuan
+            User, PenerimaManfaat, Profile, JenisBantuan
         ).join(
             PenerimaManfaat, User.id == PenerimaManfaat.userId
+        ).outerjoin(
+            Profile, User.id == Profile.userId
         ).join(
             JenisBantuan, PenerimaManfaat.jenisBantuanId == JenisBantuan.id
         )
@@ -100,12 +103,23 @@ class AdminController:
             {
                 'userId': user.id,
                 'nik': user.nik,
+                'email': user.email,
                 'nama_bantuan': jenis_bantuan.nama_bantuan,
                 'nama_user': user.nama,
                 'created_at': penerima_manfaat.created_at,
-                'status': penerima_manfaat.status
+                'status': penerima_manfaat.status,
+                'tempat_lahir': profile.tempat_lahir if profile else None,
+                'foto': profile.foto if profile else None,
+                'tanggal_lahir': profile.tanggal_lahir if profile else None,
+                'dokumen': penerima_manfaat.dokumen,
+                'telepon': profile.telepon if profile else None,
+                'provinsi': profile.provinsi if profile else None,
+                'pekerjaan': profile.pekerjaan if profile else None,
+                'penghasilan': profile.penghasilan if profile else None,
+                'rekening': profile.rekening if profile else None,
+                'alamat': profile.alamat if profile else None,
             }
-            for user, penerima_manfaat, jenis_bantuan in result
+            for user, penerima_manfaat, profile, jenis_bantuan in result
         ]
 
         response = jsonify(data)

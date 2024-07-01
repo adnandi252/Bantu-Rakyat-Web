@@ -5,6 +5,8 @@ from app.model.user import User
 from app import db, app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import jsonify
+from flask import send_from_directory
+from flask_cors import cross_origin
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -82,6 +84,16 @@ def user_dashboard(id):
 def user_lihat_program(id):
     return UserController.get_lihat_program(id)
 
+@app.route('/user/profile/<string:id>', methods=['GET'])
+@jwt_required()
+def user_profile(id):
+    return UserController.get_profile(id)
+
+@app.route('/user/profile/update/<string:id>', methods=['POST'])
+@jwt_required()
+def update_profile(id):
+    return UserController.post_profile(id)
+
 @app.route('/user/daftar-penerima-manfaat/tambah/<string:id>', methods=['POST'])
 @jwt_required()
 def post_penerima_manfaat(id):
@@ -102,7 +114,9 @@ def delete_penerima_manfaat(id):
 def user_jadwal_penyaluran(id):
     return UserController.get_data_jadwal_penyaluran(id)
 
-
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    return UserController.upload_file()
 
 
 
@@ -121,3 +135,10 @@ def get_current_user():
         'nama': user.nama,
         'role': user.role
     }), 200
+
+@app.route('/uploads/<filename>')
+@cross_origin()  # Jika menggunakan flask_cors
+def uploaded_file(filename):
+    response = send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    response.headers['Access-Control-Allow-Origin'] = '*'  # Atau origin spesifik
+    return response
