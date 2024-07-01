@@ -13,6 +13,7 @@ import DataPenyaluran from './pages/admin/DataPenyaluran';
 import HomeUser from './pages/user/HomeUser';
 import LihatProgram from './pages/user/LihatProgram';
 import RiwayatBantuan from './pages/user/RiwayatBantuan';
+import ProfilePage from './pages/user/Profile';
 
 function App() {
   return (
@@ -79,6 +80,13 @@ function App() {
           element={
             <PrivateRoute roles={['user']}>
               <RiwayatBantuan />
+            </PrivateRoute>
+          }
+        />
+        <Route path="/user/profile"
+          element={
+            <PrivateRoute roles={['user']}>
+              <ProfilePage />
             </PrivateRoute>
           }
         />

@@ -1,34 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Modal, Form } from 'react-bootstrap';
+import axios from 'axios';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import './LihatProgram.css';
 
 const LihatProgram = () => {
   const [programs, setPrograms] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedProgramId, setSelectedProgramId] = useState(null);
+  const [documentFile, setDocumentFile] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState('');
 
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
         const token = localStorage.getItem('token');
-        const userId = localStorage.getItem('id'); // Ambil userId dari local storage
+        const userId = localStorage.getItem('id');
         if (!token || !userId) {
           throw new Error('Token atau User ID tidak ditemukan di localStorage');
         }
 
-        const response = await fetch(`http://127.0.0.1:5000/user/lihat-program/${userId}`, {
+        const response = await axios.get(`http://127.0.0.1:5000/user/lihat-program/${userId}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${token}`
           }
         });
 
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-
-        const data = await response.json();
-        setPrograms(data);
+        setPrograms(response.data);
       } catch (error) {
         console.error('Error fetching programs data:', error);
       }
@@ -37,7 +36,21 @@ const LihatProgram = () => {
     fetchPrograms();
   }, []);
 
-  const handleRegister = async (programId) => {
+  const handleRegisterClick = (programId) => {
+    setSelectedProgramId(programId);
+    setShowModal(true);
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setDocumentFile(file);
+      setPdfUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('id');
@@ -45,27 +58,38 @@ const LihatProgram = () => {
         throw new Error('Token atau User ID tidak ditemukan di localStorage');
       }
 
-      const response = await fetch(`http://127.0.0.1:5000/api/register/${programId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ userId })
+      // Upload file
+      const safeFileName = selectedFile.name.replace(/[^\w\s\[\]\{\}\.-]/g, '').replace(/\s+/g, '_');;
+      const formData = new FormData();
+      formData.append('file', selectedFile, safeFileName);
+
+      const uploadResponse = await axios.post('http://127.0.0.1:5000/upload', formData, {
+          headers: {
+              'Content-Type': 'multipart/form-data'
+          }
       });
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      const documentPath = `/uploads/${safeFileName}`;
 
-      const data = await response.json();
+      // Submit registration
+      const response = await axios.post(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/tambah/${userId}`, {
+        userId,
+        jenisBantuanId: selectedProgramId,
+        dokumen: documentPath
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
       setPrograms((prevPrograms) =>
         prevPrograms.map((program) =>
-          program.id === programId ? { ...program, status: data.status } : program
+          program.id === selectedProgramId ? { ...program, status: 'belum diverifikasi' } : program
         )
       );
+      setShowModal(false);
     } catch (error) {
-      console.error('Error registering for program:', error);
+      console.error('Error submitting registration:', error);
     }
   };
 
@@ -86,7 +110,7 @@ const LihatProgram = () => {
                     <Card.Text>{program.deskripsi}</Card.Text>
                     <Button
                       className="mt-auto"
-                      onClick={() => handleRegister(program.id)}
+                      onClick={() => handleRegisterClick(program.id)}
                       disabled={program.status !== 'Belum Didaftari'}
                       variant={
                         program.status === 'aktif'
@@ -113,6 +137,26 @@ const LihatProgram = () => {
           </Row>
         </Container>
       </div>
+
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Upload Dokumen</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group controlId="formFile" className="mb-3">
+              <Form.Label>Dokumen</Form.Label>
+              <Form.Control type="file" onChange={handleFileChange} accept=".pdf" />
+            </Form.Group>
+            {pdfUrl && (
+              <embed src={pdfUrl} type="application/pdf" width="100%" height="400px" />
+            )}
+            <Button variant="primary" type="submit">
+              Submit
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
