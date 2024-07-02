@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Container, Table, Button } from 'react-bootstrap';
+import { Container, Table, Button, Modal, Form } from 'react-bootstrap';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 
 const DataPenyaluran = () => {
-  const [distributions, setDistrobutions] = useState([]);
+  const [distributions, setDistributions] = useState([]);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDistribution, setSelectedDistribution] = useState(null);
+  const [tanggalPenyaluran, setTanggalPenyaluran] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,7 +20,7 @@ const DataPenyaluran = () => {
             Authorization: `Bearer ${token}`
           }
         });
-        setDistrobutions(response.data); 
+        setDistributions(response.data); 
       } catch (error){
         setError('Ada masalah saat mengambil data. Pastikan Anda sudah login.');
         console.error('Ada masalah saat mengambil data!', error);
@@ -26,6 +29,44 @@ const DataPenyaluran = () => {
 
     fetchData();
   }, []);
+
+  const handleShowModal = (distribution) => {
+    setSelectedDistribution(distribution);
+    // Convert the date format to YYYY-MM-DD
+    const date = new Date(distribution.jadwal_penyaluran);
+    const formattedDate = date.toISOString().split('T')[0];
+    setTanggalPenyaluran(formattedDate);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedDistribution(null);
+    setTanggalPenyaluran('');
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`http://127.0.0.1:5000/admin/jadwal-penyaluran/update/${selectedDistribution.jadwalPenyaluranId}`, {
+        jadwal_penyaluran: tanggalPenyaluran
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setDistributions(prevDistributions =>
+        prevDistributions.map(dist =>
+          dist.userId === selectedDistribution.userId
+            ? { ...dist, jadwal_penyaluran: tanggalPenyaluran }
+            : dist
+        )
+      );
+      handleCloseModal();
+    } catch (error) {
+      console.error('Ada masalah saat menyimpan data!', error);
+    }
+  };
 
   if (error) {
     return <div>{error}</div>;
@@ -63,8 +104,9 @@ const DataPenyaluran = () => {
                     </span>
                   </td>
                   <td>
-                    <Button variant="success" size="sm" className="me-2">Detail</Button>
-                    <Button variant="danger" size="sm">Hapus</Button>
+                    <Button variant="link" onClick={() => handleShowModal(distribution)}>
+                      <i className="bi bi-eye"></i>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -72,6 +114,32 @@ const DataPenyaluran = () => {
           </Table>
         </Container>
       </div>
+
+      <Modal show={showModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Ubah Tanggal Penyaluran</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="tanggalPenyaluran">
+              <Form.Label>Tanggal Penyaluran</Form.Label>
+              <Form.Control
+                type="date"
+                value={tanggalPenyaluran}
+                onChange={(e) => setTanggalPenyaluran(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Close
+          </Button>
+          <Button variant="success" onClick={handleUpdate}>
+            Update
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

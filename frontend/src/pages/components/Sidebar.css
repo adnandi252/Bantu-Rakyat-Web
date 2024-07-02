@@ -1,0 +1,31 @@
+/* Sidebar.css */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    transition: transform 0.3s ease;
+    position: fixed;
+  }
+  
+.sidebar.hidden {
+transform: translateX(-100%);
+}
+
+.sidebar.visible {
+transform: translateX(0);
+}
+
+.toggle-button {
+position: fixed;
+top: 10px;
+left: 260px;
+background: #ADD8E6;
+border: none;
+padding: 10px;
+cursor: pointer;
+transition: left 0.3s ease;
+}
+
+.sidebar.hidden + .toggle-button {
+left: 10px;
+}
+  

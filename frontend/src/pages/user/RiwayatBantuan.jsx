@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Container, Table, Button } from 'react-bootstrap';
+import { Container, Table, Button, Modal, Form } from 'react-bootstrap';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 
 const RiwayatBantuan = () => {
   const [distributions, setDistributions] = useState([]);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDistribution, setSelectedDistribution] = useState(null);
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,6 +30,41 @@ const RiwayatBantuan = () => {
 
     fetchData();
   }, []);
+
+  const handleShowModal = (distribution) => {
+    setSelectedDistribution(distribution);
+    setStatus(distribution.status);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedDistribution(null);
+    setStatus('');
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`http://127.0.0.1:5000/user/jadwal_penyaluran/update/${selectedDistribution.penyaluranId}`, {
+        status: status
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setDistributions(prevDistributions =>
+        prevDistributions.map(dist =>
+          dist.id === selectedDistribution.id
+            ? { ...dist, status: status }
+            : dist
+        )
+      );
+      handleCloseModal();
+    } catch (error) {
+      console.error('Ada masalah saat menyimpan data!', error);
+    }
+  };
 
   if (error) {
     return <div>{error}</div>;
@@ -63,8 +101,9 @@ const RiwayatBantuan = () => {
                   </td>
                   <td>{distribution.anggaran_per_paket}</td>
                   <td>
-                    <Button variant="success" size="sm" className="me-2">Detail</Button>
-                    <Button variant="danger" size="sm">Hapus</Button>
+                    <Button variant="link" onClick={() => handleShowModal(distribution)}>
+                      <i className="bi bi-pen"></i>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -72,6 +111,35 @@ const RiwayatBantuan = () => {
           </Table>
         </Container>
       </div>
+
+      <Modal show={showModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Ubah Status Penyaluran</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="statusPenyaluran">
+              <Form.Label>Status Penyaluran</Form.Label>
+              <Form.Control
+                as="select"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="proses">Proses</option>
+                <option value="selesai">Selesai</option>
+              </Form.Control>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Close
+          </Button>
+          <Button variant="success" onClick={handleUpdate}>
+            Update
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

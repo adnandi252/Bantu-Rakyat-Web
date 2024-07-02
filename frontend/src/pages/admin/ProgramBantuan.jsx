@@ -202,7 +202,7 @@ const ProgramBantuan = () => {
                 <option value="nonaktif">Nonaktif</option>
               </Form.Select>
             </Form.Group>
-            <Button variant="primary" type="submit">
+            <Button variant="success" type="submit">
               Simpan
             </Button>
           </Form>
@@ -259,7 +259,7 @@ const ProgramBantuan = () => {
                   <option value="nonaktif">Nonaktif</option>
                 </Form.Select>
               </Form.Group>
-              <Button variant="primary" type="submit">
+              <Button variant="success" type="submit">
                 Update
               </Button>
             </Form>

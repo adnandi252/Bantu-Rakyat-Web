@@ -10,11 +10,14 @@ const VerifikasiPenerima = () => {
   const [selectedRegistrant, setSelectedRegistrant] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedKeterangan, setSelectedKeterangan] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token'); // Ambil token dari localStorage
+        const token = localStorage.getItem('token');
         const response = await axios.get('http://127.0.0.1:5000/admin/verifikasi-penerima', {
           headers: {
             Authorization: `Bearer ${token}`
@@ -32,7 +35,8 @@ const VerifikasiPenerima = () => {
 
   const handleViewDetails = (registrant) => {
     setSelectedRegistrant(registrant);
-    setSelectedStatus(registrant.status); // Set nilai awal status
+    setSelectedStatus(registrant.status);
+    setSelectedKeterangan(registrant.keterangan || '');
     setShowDetailsModal(true);
   };
 
@@ -42,6 +46,60 @@ const VerifikasiPenerima = () => {
 
   const handleStatusChange = (e) => {
     setSelectedStatus(e.target.value);
+    console.log('status', e.target.value);
+  };
+
+  const handleKeteranganChange = (e) => {
+    setSelectedKeterangan(e.target.value);
+    console.log('keterangan: ', e.target.value);
+  };
+
+  const handleSubmit = () => {
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (!selectedRegistrant) return;
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://127.0.0.1:5000/admin/verifikasi-penerima-manfaat/update/${selectedRegistrant.userId}`,
+        {
+          status: selectedStatus,
+          keterangan: selectedKeterangan
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status === 200) {
+        setRegistrants(prevRegistrants =>
+          prevRegistrants.map(reg =>
+            reg.userId === selectedRegistrant.userId
+              ? { ...reg, status: selectedStatus, keterangan: selectedKeterangan }
+              : reg
+          )
+        );
+        setShowDetailsModal(false);
+        setShowConfirmationModal(false);
+      } else {
+        console.error('Failed to update registrant', response);
+      }
+    } catch (error) {
+      console.error('Ada masalah saat mengupdate data!', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseConfirmationModal = () => {
+    setShowConfirmationModal(false);
   };
 
   return (
@@ -174,15 +232,39 @@ const VerifikasiPenerima = () => {
           <Form.Group className="mb-3">
             <Form.Label>Status</Form.Label>
             <Form.Select value={selectedStatus} onChange={handleStatusChange}>
-              <option value="belum_verifikasi">Belum Verifikasi</option>
-              <option value="terima">Terima</option>
-              <option value="tolak">Tolak</option>
+              <option value="belum diverifikasi">Belum Verifikasi</option>
+              <option value="aktif">Terima</option>
+              <option value="ditolak">Tolak</option>
             </Form.Select>
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Keterangan</Form.Label>
+            <Form.Control as="textarea" rows={3} value={selectedKeterangan} onChange={handleKeteranganChange} />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseDetailsModal}>
             Close
+          </Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Updating...' : 'Submit'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showConfirmationModal} onHide={handleCloseConfirmationModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Apakah Anda Yakin?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Apakah Anda yakin akan melakukan update status?</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseConfirmationModal}>
+            Cancel
+          </Button>
+          <Button variant="success" onClick={handleConfirmSubmit} disabled={loading}>
+            {loading ? 'Updating...' : 'Ya!'}
           </Button>
         </Modal.Footer>
       </Modal>

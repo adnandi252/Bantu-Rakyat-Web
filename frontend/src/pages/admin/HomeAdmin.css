@@ -1,0 +1,57 @@
+/* HomeAdmin.css */
+body {
+margin: 0;
+}
+
+.content-area {
+    margin-top: 80px;
+    padding: 20px;
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.content-area.visible {
+    margin-left: 250px;
+}
+
+.content-area.hidden {
+    margin-left: 0;
+}
+
+.sidebar {
+width: 250px;
+height: 100vh;
+position: fixed;
+top: 0;
+left: 0;
+z-index: 1100; /* Higher than header */
+background-color: #f8f9fa; /* Background color of the sidebar */
+transition: transform 0.3s ease;
+}
+
+.toggle-button {
+position: fixed;
+top: 10px;
+left: 260px;
+background: #ADD8E6; /* Light blue color */
+border: none;
+padding: 10px;
+cursor: pointer;
+transition: left 0.3s ease;
+z-index: 1200; /* Higher than sidebar */
+}
+
+.sidebar-hidden .toggle-button {
+left: 10px;
+}
+
+/* .content-area.expanded .navbar-custom {
+    margin-left: 0;
+} */
+
+
+.center-children > * {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    align-items: center;
+    }

@@ -8,7 +8,7 @@ import './LihatProgram.css';
 const LihatProgram = () => {
   const [programs, setPrograms] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [selectedProgramId, setSelectedProgramId] = useState(null);
+  const [selectedProgram, setSelectedProgram] = useState(null);
   const [documentFile, setDocumentFile] = useState(null);
   const [pdfUrl, setPdfUrl] = useState('');
 
@@ -36,8 +36,9 @@ const LihatProgram = () => {
     fetchPrograms();
   }, []);
 
-  const handleRegisterClick = (programId) => {
-    setSelectedProgramId(programId);
+  const handleRegisterClick = (program) => {
+    setSelectedProgram(program);
+    setPdfUrl(program.dokumen ? `http://127.0.0.1:5000${program.dokumen}` : '');
     setShowModal(true);
   };
 
@@ -58,23 +59,25 @@ const LihatProgram = () => {
         throw new Error('Token atau User ID tidak ditemukan di localStorage');
       }
 
-      // Upload file
-      const safeFileName = selectedFile.name.replace(/[^\w\s\[\]\{\}\.-]/g, '').replace(/\s+/g, '_');;
-      const formData = new FormData();
-      formData.append('file', selectedFile, safeFileName);
+      let documentPath = selectedProgram.dokumen;
 
-      const uploadResponse = await axios.post('http://127.0.0.1:5000/upload', formData, {
+      if (documentFile) {
+        const safeFileName = documentFile.name.replace(/[^\w\s\[\]\{\}\.-]/g, '').replace(/\s+/g, '_');
+        const formData = new FormData();
+        formData.append('file', documentFile, safeFileName);
+
+        await axios.post('http://127.0.0.1:5000/upload', formData, {
           headers: {
-              'Content-Type': 'multipart/form-data'
+            'Content-Type': 'multipart/form-data'
           }
-      });
+        });
 
-      const documentPath = `/uploads/${safeFileName}`;
+        documentPath = `/uploads/${safeFileName}`;
+      }
 
-      // Submit registration
-      const response = await axios.post(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/tambah/${userId}`, {
+      await axios.post(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/tambah/${userId}`, {
         userId,
-        jenisBantuanId: selectedProgramId,
+        jenisBantuanId: selectedProgram.id,
         dokumen: documentPath
       }, {
         headers: {
@@ -84,12 +87,107 @@ const LihatProgram = () => {
 
       setPrograms((prevPrograms) =>
         prevPrograms.map((program) =>
-          program.id === selectedProgramId ? { ...program, status: 'belum diverifikasi' } : program
+          program.id === selectedProgram.id ? { ...program, status: 'belum diverifikasi', dokumen: documentPath } : program
         )
       );
       setShowModal(false);
     } catch (error) {
       console.error('Error submitting registration:', error);
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('id');
+      if (!token || !userId) {
+        throw new Error('Token atau User ID tidak ditemukan di localStorage');
+      }
+
+      await axios.delete(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/batalkan/${userId}/${selectedProgram.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setPrograms((prevPrograms) =>
+        prevPrograms.map((program) =>
+          program.id === selectedProgram.id ? { ...program, status: 'Belum Didaftari', dokumen: '' } : program
+        )
+      );
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error cancelling registration:', error);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('id');
+      if (!token || !userId) {
+        throw new Error('Token atau User ID tidak ditemukan di localStorage');
+      }
+
+      await axios.post(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/mengundurkan-diri/${userId}/${selectedProgram.id}`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setPrograms((prevPrograms) =>
+        prevPrograms.map((program) =>
+          program.id === selectedProgram.id ? { ...program, status: 'Belum Didaftari', dokumen: '' } : program
+        )
+      );
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error withdrawing from program:', error);
+    }
+  };
+
+  const handleAppeal = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('id');
+      if (!token || !userId) {
+        throw new Error('Token atau User ID tidak ditemukan di localStorage');
+      }
+
+      let documentPath = selectedProgram.dokumen;
+
+      if (documentFile) {
+        const safeFileName = documentFile.name.replace(/[^\w\s\[\]\{\}\.-]/g, '').replace(/\s+/g, '_');
+        const formData = new FormData();
+        formData.append('file', documentFile, safeFileName);
+
+        await axios.post('http://127.0.0.1:5000/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        documentPath = `/uploads/${safeFileName}`;
+      }
+
+      await axios.post(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/banding/${userId}`, {
+        userId,
+        jenisBantuanId: selectedProgram.id,
+        dokumen: documentPath
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setPrograms((prevPrograms) =>
+        prevPrograms.map((program) =>
+          program.id === selectedProgram.id ? { ...program, status: 'belum diverifikasi', dokumen: documentPath } : program
+        )
+      );
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error submitting appeal:', error);
     }
   };
 
@@ -110,8 +208,7 @@ const LihatProgram = () => {
                     <Card.Text>{program.deskripsi}</Card.Text>
                     <Button
                       className="mt-auto"
-                      onClick={() => handleRegisterClick(program.id)}
-                      disabled={program.status !== 'Belum Didaftari'}
+                      onClick={() => handleRegisterClick(program)}
                       variant={
                         program.status === 'aktif'
                           ? 'success'
@@ -128,6 +225,8 @@ const LihatProgram = () => {
                         ? 'Mengirim Pengajuan'
                         : program.status === 'ditolak'
                         ? 'Pengajuan Ditolak'
+                        : program.status === 'Belum Didaftari'
+                        ? 'Daftar'
                         : 'Daftar'}
                     </Button>
                   </Card.Body>
@@ -138,25 +237,78 @@ const LihatProgram = () => {
         </Container>
       </div>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Upload Dokumen</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group controlId="formFile" className="mb-3">
-              <Form.Label>Dokumen</Form.Label>
-              <Form.Control type="file" onChange={handleFileChange} accept=".pdf" />
-            </Form.Group>
-            {pdfUrl && (
-              <embed src={pdfUrl} type="application/pdf" width="100%" height="400px" />
-            )}
-            <Button variant="primary" type="submit">
-              Submit
-            </Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
+      {selectedProgram && (
+        <Modal show={showModal} onHide={() => setShowModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>{selectedProgram.namaBantuan}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form onSubmit={handleSubmit}>
+              {selectedProgram.keterangan && (
+                <Form.Group controlId="formKeterangan" className="mb-3">
+                  <Form.Label>Keterangan</Form.Label>
+                  <Form.Control as="textarea" rows={3} readOnly value={selectedProgram.keterangan} />
+                </Form.Group>
+              )}
+              {selectedProgram.status === 'belum diverifikasi' && (
+                <>
+                  <Form.Group controlId="formFile" className="mb-3">
+                    <Form.Label>Dokumen</Form.Label>
+                    <Form.Control type="file" onChange={handleFileChange} accept=".pdf" />
+                  </Form.Group>
+                  {pdfUrl && (
+                    <embed src={pdfUrl} type="application/pdf" width="100%" height="400px" />
+                  )}
+                  <Button variant="primary" type="submit">
+                    Update
+                  </Button>
+                  <Button variant="danger" className="ms-2" onClick={handleCancel}>
+                    Batalkan Pengajuan
+                  </Button>
+                </>
+              )}
+              {selectedProgram.status === 'aktif' && (
+                <>
+                  {selectedProgram.dokumen && (
+                    <embed src={`http://127.0.0.1:5000${selectedProgram.dokumen}`} type="application/pdf" width="100%" height="400px" />
+                  )}
+                  <Button variant="danger" onClick={handleWithdraw}>
+                    Mengundurkan Diri
+                  </Button>
+                </>
+              )}
+              {selectedProgram.status === 'ditolak' && (
+                <>
+                  <Form.Group controlId="formFile" className="mb-3">
+                    <Form.Label>Dokumen</Form.Label>
+                    <Form.Control type="file" onChange={handleFileChange} accept=".pdf" />
+                  </Form.Group>
+                  {pdfUrl && (
+                    <embed src={pdfUrl} type="application/pdf" width="100%" height="400px" />
+                  )}
+                  <Button variant="primary" onClick={handleAppeal}>
+                    Ajukan Banding
+                  </Button>
+                </>
+              )}
+              {selectedProgram.status === 'Belum Didaftari' && (
+                <>
+                  <Form.Group controlId="formFile" className="mb-3">
+                    <Form.Label>Dokumen</Form.Label>
+                    <Form.Control type="file" onChange={handleFileChange} accept=".pdf" />
+                  </Form.Group>
+                  {pdfUrl && (
+                    <embed src={pdfUrl} type="application/pdf" width="100%" height="400px" />
+                  )}
+                  <Button variant="primary" type="submit">
+                    Submit
+                  </Button>
+                </>
+              )}
+            </Form>
+          </Modal.Body>
+        </Modal>
+      )}
     </div>
   );
 };

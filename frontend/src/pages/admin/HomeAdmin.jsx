@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import './HomeAdmin.css'; // Import custom CSS
 
 const HomeAdmin = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -18,6 +20,7 @@ const HomeAdmin = () => {
           }
         });
         setData(response.data);
+        
       } catch (error) {
         setError('Ada masalah saat mengambil data. Pastikan Anda sudah login.');
         console.error('Ada masalah saat mengambil data!', error);
@@ -37,11 +40,19 @@ const HomeAdmin = () => {
 
   const { pendaftar_bantuan_sosial, bantuan_tersalurkan, jenis_bantuan } = data;
 
+
+  const handleSidebarToggle = (isVisible) => {
+    setIsSidebarVisible(isVisible);
+    console.log('Sidebar is visible:', isVisible);
+  };
+
+
+
   return (
-    <div className="d-flex">
-      <Sidebar />
-      <div className="flex-grow-1">
-        <Header />
+    <div className="d-flex" style={{display:'flex', justifyContent:'center', width:'100%', alignItems:'center'}}>
+      <Sidebar onToggle={handleSidebarToggle}/>
+      <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{padding:'0px'}}>
+      <Header isSidebarVisible={isSidebarVisible} />
         <Container fluid>
           <Row>
             <Col>
