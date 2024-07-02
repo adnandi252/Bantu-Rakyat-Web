@@ -64,20 +64,26 @@ class UserController:
     def get_lihat_program(id):
         programs = JenisBantuan.query.filter_by(status='aktif').all()
         penerima_manfaat = PenerimaManfaat.query.filter_by(userId=id).all()
-        user_programs = {pm.jenisBantuanId: pm.status for pm in penerima_manfaat}
+        user_programs = {pm.jenisBantuanId: {'status': pm.status, 'keterangan': pm.keterangan, 'dokumen': pm.dokumen} for pm in penerima_manfaat}
 
         programs_data = []
         for program in programs:
-            status = user_programs.get(program.id, 'Belum Didaftari')
+            user_program = user_programs.get(program.id, {})
+            status = user_program.get('status', 'Belum Didaftari')
+            keterangan = user_program.get('keterangan', '')
+            dokumen = user_program.get('dokumen', '')
             programs_data.append({
                 'id': program.id,
                 'namaBantuan': program.nama_bantuan,
                 'anggaranPerPaket': program.anggaran_per_paket,
                 'deskripsi': program.deskripsi,
-                'status': status
+                'status': status,
+                'keterangan': keterangan,
+                'dokumen': dokumen
             })
 
         return jsonify(programs_data)
+
 
     @staticmethod
     def get_profile(id):

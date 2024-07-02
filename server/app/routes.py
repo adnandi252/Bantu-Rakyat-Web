@@ -114,6 +114,12 @@ def delete_penerima_manfaat(id):
 def user_jadwal_penyaluran(id):
     return UserController.get_data_jadwal_penyaluran(id)
 
+@app.route('/user/jadwal_penyaluran/update/<string:id>', methods=['PUT'])
+@jwt_required()
+def update_status_jadwal_penyaluran(id):
+    return UserController.update_status_jadwal_penyaluran(id)
+
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     return UserController.upload_file()

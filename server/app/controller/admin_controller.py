@@ -95,6 +95,8 @@ class AdminController:
             Profile, User.id == Profile.userId
         ).join(
             JenisBantuan, PenerimaManfaat.jenisBantuanId == JenisBantuan.id
+        ).filter(
+            PenerimaManfaat.status.in_(['belum diverifikasi', 'ditolak'])
         )
 
         result = query.all()
@@ -118,6 +120,7 @@ class AdminController:
                 'penghasilan': profile.penghasilan if profile else None,
                 'rekening': profile.rekening if profile else None,
                 'alamat': profile.alamat if profile else None,
+                'keterangan': penerima_manfaat.keterangan if penerima_manfaat.keterangan else '',
             }
             for user, penerima_manfaat, profile, jenis_bantuan in result
         ]
@@ -129,9 +132,11 @@ class AdminController:
     @staticmethod
     def get_data_penerima_manfaat():
         query = db.session.query(
-            User, PenerimaManfaat, JenisBantuan
+            User, PenerimaManfaat, Profile,JenisBantuan
         ).join(
             PenerimaManfaat, User.id == PenerimaManfaat.userId
+        ).outerjoin(
+            Profile, User.id == Profile.userId
         ).join(
             JenisBantuan, PenerimaManfaat.jenisBantuanId == JenisBantuan.id
         ).filter(
@@ -143,14 +148,26 @@ class AdminController:
         data = [
             {
                 'userId': user.id,
-                'penerimaManfaatId': penerima_manfaat.id,
                 'nik': user.nik,
+                'email': user.email,
+                'penerimaManfaatId': penerima_manfaat.id,
                 'nama_bantuan': jenis_bantuan.nama_bantuan,
                 'nama_user': user.nama,
                 'created_at': penerima_manfaat.created_at,
-                'status': penerima_manfaat.status
+                'status': penerima_manfaat.status,
+                'tempat_lahir': profile.tempat_lahir if profile else None,
+                'foto': profile.foto if profile else None,
+                'tanggal_lahir': profile.tanggal_lahir if profile else None,
+                'dokumen': penerima_manfaat.dokumen,
+                'telepon': profile.telepon if profile else None,
+                'provinsi': profile.provinsi if profile else None,
+                'pekerjaan': profile.pekerjaan if profile else None,
+                'penghasilan': profile.penghasilan if profile else None,
+                'rekening': profile.rekening if profile else None,
+                'alamat': profile.alamat if profile else None,
+                'keterangan': penerima_manfaat.keterangan if penerima_manfaat.keterangan else '',
             }
-            for user, penerima_manfaat, jenis_bantuan in result
+            for user, penerima_manfaat, profile, jenis_bantuan in result
         ]
 
         response = jsonify(data)
@@ -174,6 +191,7 @@ class AdminController:
         data = [
             {
                 'userId': user.id,
+                'jadwalPenyaluranId': jadwal_penyaluran.id,
                 'nik': user.nik,
                 'nama_user': user.nama,
                 'nama_bantuan': jenis_bantuan.nama_bantuan,
@@ -225,6 +243,7 @@ class AdminController:
         penyaluran_bantuan = JadwalPenyaluran(
             penerimaManfaatId=data['penerimaManfaatId'],
             jadwal_penyaluran=data['jadwal_penyaluran'],
+            status=data['status']
         )
 
         db.session.add(penyaluran_bantuan)
@@ -268,7 +287,7 @@ class AdminController:
     def update_status_penerima_manfaat(id):
         data = request.get_json()
 
-        penerima_manfaat = PenerimaManfaat.query.filter_by(id=id).first()
+        penerima_manfaat = PenerimaManfaat.query.filter_by(userId=id).first()
 
         if penerima_manfaat is None:
             response = jsonify({'error': 'Penerima manfaat tidak ditemukan'})
@@ -281,6 +300,7 @@ class AdminController:
             return response
         
         penerima_manfaat.status = data['status']
+        penerima_manfaat.keterangan = data['keterangan']
 
         db.session.commit()
 
