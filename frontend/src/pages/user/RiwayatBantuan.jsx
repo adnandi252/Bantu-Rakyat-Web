@@ -10,24 +10,25 @@ const RiwayatBantuan = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedDistribution, setSelectedDistribution] = useState(null);
   const [status, setStatus] = useState('');
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const id = localStorage.getItem('id');
+      const response = await axios.get(`http://127.0.0.1:5000/user/jadwal-penyaluran/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setDistributions(response.data);
+    } catch (error) {
+      setError('Ada masalah saat mengambil data. Pastikan Anda sudah login.');
+      console.error('Ada masalah saat mengambil data!', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const id = localStorage.getItem('id');
-        const response = await axios.get(`http://127.0.0.1:5000/user/jadwal-penyaluran/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setDistributions(response.data);
-      } catch (error) {
-        setError('Ada masalah saat mengambil data. Pastikan Anda sudah login.');
-        console.error('Ada masalah saat mengambil data!', error);
-      }
-    };
-
     fetchData();
   }, []);
 
@@ -53,13 +54,7 @@ const RiwayatBantuan = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      setDistributions(prevDistributions =>
-        prevDistributions.map(dist =>
-          dist.id === selectedDistribution.id
-            ? { ...dist, status: status }
-            : dist
-        )
-      );
+      await fetchData(); // Mengambil kembali data dari server
       handleCloseModal();
     } catch (error) {
       console.error('Ada masalah saat menyimpan data!', error);
@@ -70,14 +65,18 @@ const RiwayatBantuan = () => {
     return <div>{error}</div>;
   }
 
+  const handleSidebarToggle = (isVisible) => {
+    setIsSidebarVisible(isVisible);
+    console.log('Sidebar is visible:', isVisible);
+  };
+
   return (
-    <div className="d-flex">
-      <Sidebar />
-      <div className="flex-grow-1">
-        <Header />
-        <Container fluid className="p-4">
+    <div className="d-flex" style={{display:'flex', justifyContent:'center', width:'100%', alignItems:'center'}}>
+      <Sidebar onToggle={handleSidebarToggle}/>
+      <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{padding:'10px', width:'100%'}}>
+        <Header isSidebarVisible={isSidebarVisible} />
+        <Container className="p-4" style={{backgroundColor:'grey'}}>
           <h3>Data Penyaluran Bantuan Sosial</h3>
-          <Button variant="primary" className="mb-3">Tambahkan Data</Button>
           <Table striped bordered hover>
             <thead>
               <tr>

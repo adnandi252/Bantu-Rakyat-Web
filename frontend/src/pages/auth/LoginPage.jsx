@@ -30,20 +30,19 @@ const LoginPage = () => {
                         <div className="card-body">
                             <h2 className="card-title">Login ke Akun Anda</h2>
                             <p className="card-text">
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut.
+                            Silakan login dengan email dan password Anda untuk mengakses akun dan fitur-fitur yang tersedia. Pastikan Anda memasukkan informasi yang benar untuk menghindari masalah saat login.
                             </p>
                             <form onSubmit={handleSubmit}>
                                 <div className="form-group">
-                                    <label>Alamat Email</label>
+                                    <label className='mb-2'>Alamat Email</label>
                                     <input type="email" className="form-control" placeholder="Enter email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                                 </div>
-                                <div className="form-group">
-                                    <label>Password</label>
+                                <div className="form-group mt-3">
+                                    <label className='mb-2'>Password</label>
                                     <input type="password" className="form-control" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                                 </div>
-                                <button type="submit" className="btn btn-primary w-100">Log in</button>
+                                <button type="submit" className="btn btn-primary w-100 mt-3">Log in</button>
                             </form>
-                            <a href="#" className="d-block text-right mt-2">Forgot your password?</a>
                         </div>
                     </div>
                 </div>
@@ -52,7 +51,7 @@ const LoginPage = () => {
                         <div className="card-body">
                             <h2 className="card-title">Register Akun</h2>
                             <p className="card-text">
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut.
+                            Belum punya akun? Daftar sekarang untuk menikmati berbagai layanan dan fitur yang kami tawarkan. Hanya butuh beberapa menit untuk membuat akun baru.
                             </p>
                             <a className="btn btn-outline-primary w-100" href="/register">Register</a>
                         </div>

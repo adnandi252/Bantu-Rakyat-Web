@@ -49,6 +49,7 @@ const AuthProvider = ({ children }) => {
       localStorage.setItem('token', response.data.access_token);
       localStorage.setItem('role', response.data.role);
       localStorage.setItem('id', response.data.id);
+      localStorage.setItem('nama', response.data.nama);
       setAuth({
         token: response.data.access_token,
         role: response.data.role,
@@ -64,6 +65,7 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('id');
+    localStorage.removeItem('nama');
     setAuth({
       token: null,
       role: null,

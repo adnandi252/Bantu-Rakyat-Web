@@ -10,6 +10,8 @@ const DataPenyaluran = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedDistribution, setSelectedDistribution] = useState(null);
   const [tanggalPenyaluran, setTanggalPenyaluran] = useState('');
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,12 +74,17 @@ const DataPenyaluran = () => {
     return <div>{error}</div>;
   }
 
+  const handleSidebarToggle = (isVisible) => {
+    setIsSidebarVisible(isVisible);
+    console.log('Sidebar is visible:', isVisible);
+  };
+
   return (
-    <div className="d-flex">
-      <Sidebar />
-      <div className="flex-grow-1">
-        <Header />
-        <Container fluid className="p-4">
+    <div className="d-flex" style={{display:'flex', justifyContent:'center', width:'100%', alignItems:'center'}}>
+      <Sidebar onToggle={handleSidebarToggle}/>
+      <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{padding:'10px', width:'100%'}}>
+      <Header isSidebarVisible={isSidebarVisible} />
+        <Container className="p-4" style={{backgroundColor:'grey'}}>
           <h3>Data Penyaluran Bantuan Sosial</h3>
           <Table striped bordered hover>
             <thead>

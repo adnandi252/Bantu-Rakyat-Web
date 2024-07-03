@@ -13,23 +13,25 @@ const DataPenerima = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [status, setStatus] = useState('');
   const [keterangan, setKeterangan] = useState('');
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://127.0.0.1:5000/admin/penerima-manfaat', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setRecipients(response.data);
+    } catch (error) {
+      setError('Ada masalah saat mengambil data. Pastikan Anda sudah login.');
+      console.error('Ada masalah saat mengambil data!', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://127.0.0.1:5000/admin/penerima-manfaat', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setRecipients(response.data);
-      } catch (error) {
-        setError('Ada masalah saat mengambil data. Pastikan Anda sudah login.');
-        console.error('Ada masalah saat mengambil data!', error);
-      }
-    };
-
     fetchData();
   }, []);
 
@@ -57,6 +59,7 @@ const DataPenerima = () => {
         }
       });
       if (response.status === 200) {
+        fetchData();
         handleCloseModal();
       }
     } catch (error) {
@@ -69,7 +72,6 @@ const DataPenerima = () => {
     setStatus(recipient.status);
     setKeterangan(recipient.keterangan || '');
     setShowDetailsModal(true);
-    console.log(recipient);  // Tambahkan log untuk debugging
   };
 
   const handleCloseDetailsModal = () => {
@@ -88,7 +90,7 @@ const DataPenerima = () => {
   const handleSubmit = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`http://127.0.0.1:5000/admin/verifikasi-penerima-manfaat/update/${selectedRecipient.userId}`, {
+      const response = await axios.put(`http://127.0.0.1:5000/admin/verifikasi-penerima-manfaat/update/${selectedRecipient.id}`, {
         status,
         keterangan
       }, {
@@ -97,14 +99,7 @@ const DataPenerima = () => {
         }
       });
       if (response.status === 200) {
-        // Update the local state with the new status and keterangan
-        setRecipients(prevRecipients =>
-          prevRecipients.map(recipient => 
-            recipient.userId === selectedRecipient.userId
-              ? { ...recipient, status, keterangan }
-              : recipient
-          )
-        );
+        fetchData();
         setShowDetailsModal(false);
       }
     } catch (error) {
@@ -116,12 +111,17 @@ const DataPenerima = () => {
     return <div>{error}</div>;
   }
 
+  const handleSidebarToggle = (isVisible) => {
+    setIsSidebarVisible(isVisible);
+    console.log('Sidebar is visible:', isVisible);
+  };
+
   return (
-    <div className="d-flex">
-      <Sidebar />
-      <div className="flex-grow-1">
-        <Header />
-        <Container fluid className="p-4">
+    <div className="d-flex" style={{display:'flex', justifyContent:'center', width:'100%', alignItems:'center'}}>
+      <Sidebar onToggle={handleSidebarToggle}/>
+      <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{padding:'10px', width:'100%'}}>
+      <Header isSidebarVisible={isSidebarVisible} />
+        <Container className="p-4" style={{backgroundColor:'grey'}}>
           <h3>Data Penerima Bantuan Sosial</h3>
           <Table striped bordered hover>
             <thead>
@@ -150,7 +150,9 @@ const DataPenerima = () => {
                   </td>
                   <td>
                     <Button variant='link' onClick={() => handleShowDetailsModal(recipient)}><i className='bi bi-eye'></i></Button>
-                    <Button variant="link" onClick={() => handleShowModal(recipient)}><i className="bi bi-plus-square"></i></Button>
+                    {recipient.status !== 'nonaktif' && (
+                      <Button variant="link" onClick={() => handleShowModal(recipient)}><i className="bi bi-plus-square"></i></Button>
+                    )}
                   </td>
                 </tr>
               ))}

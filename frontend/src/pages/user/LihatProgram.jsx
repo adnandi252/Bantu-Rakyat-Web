@@ -11,6 +11,7 @@ const LihatProgram = () => {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [documentFile, setDocumentFile] = useState(null);
   const [pdfUrl, setPdfUrl] = useState('');
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
   useEffect(() => {
     const fetchPrograms = async () => {
@@ -104,7 +105,7 @@ const LihatProgram = () => {
         throw new Error('Token atau User ID tidak ditemukan di localStorage');
       }
 
-      await axios.delete(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/batalkan/${userId}/${selectedProgram.id}`, {
+      await axios.delete(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/delete/${selectedProgram.penerimaManfaatId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -129,7 +130,10 @@ const LihatProgram = () => {
         throw new Error('Token atau User ID tidak ditemukan di localStorage');
       }
 
-      await axios.post(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/mengundurkan-diri/${userId}/${selectedProgram.id}`, {}, {
+      await axios.put(`http://127.0.0.1:5000/admin/verifikasi-penerima-manfaat/update/${selectedProgram.penerimaManfaatId}`, {
+        status: 'nonaktif',
+        keterangan: selectedProgram.keterangan
+      }, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -170,9 +174,7 @@ const LihatProgram = () => {
         documentPath = `/uploads/${safeFileName}`;
       }
 
-      await axios.post(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/banding/${userId}`, {
-        userId,
-        jenisBantuanId: selectedProgram.id,
+      await axios.put(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/ajukan-ulang/${selectedProgram.penerimaManfaatId}`, {
         dokumen: documentPath
       }, {
         headers: {
@@ -191,11 +193,59 @@ const LihatProgram = () => {
     }
   };
 
+  const handleUpdate = async (event) => {
+    event.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('id');
+      if (!token || !userId) {
+        throw new Error('Token atau User ID tidak ditemukan di localStorage');
+      }
+
+      if (documentFile) {
+        const safeFileName = documentFile.name.replace(/[^\w\s\[\]\{\}\.-]/g, '').replace(/\s+/g, '_');
+        const formData = new FormData();
+        formData.append('file', documentFile, safeFileName);
+
+        await axios.post('http://127.0.0.1:5000/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        const documentPath = `/uploads/${safeFileName}`;
+
+        await axios.put(`http://127.0.0.1:5000/user/daftar-penerima-manfaat/update/${selectedProgram.penerimaManfaatId}`, {
+          dokumen: documentPath
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        setPrograms((prevPrograms) =>
+          prevPrograms.map((program) =>
+            program.id === selectedProgram.id ? { ...program, dokumen: documentPath } : program
+          )
+        );
+      }
+
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error updating document:', error);
+    }
+  };
+
+  const handleSidebarToggle = (isVisible) => {
+    setIsSidebarVisible(isVisible);
+    console.log('Sidebar is visible:', isVisible);
+  };
+
   return (
-    <div className="d-flex">
-      <Sidebar />
-      <div className="flex-grow-1">
-        <Header />
+    <div className="d-flex" style={{display:'flex', justifyContent:'center', width:'100%', alignItems:'center'}}>
+      <Sidebar onToggle={handleSidebarToggle}/>
+      <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{padding:'0px'}}>
+      <Header isSidebarVisible={isSidebarVisible} />
         <Container fluid>
           <h3 className="mt-4">Program Bantuan</h3>
           <Row>
@@ -216,6 +266,8 @@ const LihatProgram = () => {
                           ? 'warning'
                           : program.status === 'ditolak'
                           ? 'danger'
+                          : program.status === 'Belum Didaftari'
+                          ? 'primary'
                           : 'primary'
                       }
                     >
@@ -227,7 +279,7 @@ const LihatProgram = () => {
                         ? 'Pengajuan Ditolak'
                         : program.status === 'Belum Didaftari'
                         ? 'Daftar'
-                        : 'Daftar'}
+                        : 'Nonaktif'}
                     </Button>
                   </Card.Body>
                 </Card>
@@ -259,7 +311,7 @@ const LihatProgram = () => {
                   {pdfUrl && (
                     <embed src={pdfUrl} type="application/pdf" width="100%" height="400px" />
                   )}
-                  <Button variant="primary" type="submit">
+                  <Button variant="primary" onClick={handleUpdate}>
                     Update
                   </Button>
                   <Button variant="danger" className="ms-2" onClick={handleCancel}>

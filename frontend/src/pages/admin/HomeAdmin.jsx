@@ -46,8 +46,6 @@ const HomeAdmin = () => {
     console.log('Sidebar is visible:', isVisible);
   };
 
-
-
   return (
     <div className="d-flex" style={{display:'flex', justifyContent:'center', width:'100%', alignItems:'center'}}>
       <Sidebar onToggle={handleSidebarToggle}/>

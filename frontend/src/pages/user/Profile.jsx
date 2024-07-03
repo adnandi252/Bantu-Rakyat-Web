@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { Container} from 'react-bootstrap';
 import axios from 'axios';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
@@ -22,6 +23,8 @@ const ProfilePage = () => {
     const [error, setError] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
 
     const convertDateToInputFormat = (dateString) => {
         const date = new Date(dateString);
@@ -124,88 +127,89 @@ const ProfilePage = () => {
         setProfile({ ...profile, [name]: value });
     };
 
+    const handleSidebarToggle = (isVisible) => {
+        setIsSidebarVisible(isVisible);
+        console.log('Sidebar is visible:', isVisible);
+      };
+
     return (
-        <div>
-            <Header />
-            <div className="container-fluid">
+        <div className="d-flex" style={{ justifyContent: 'center', width: '100%', alignItems: 'center' }}>
+        <Sidebar onToggle={handleSidebarToggle} />
+        <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{ padding: '0px', marginBottom:'20px' }}>
+            <Header isSidebarVisible={isSidebarVisible} />
+            <Container fluid className="p-4" style={{ backgroundColor: 'grey' }}>
+                <h1 className="mb-4">Profile Akun</h1>
                 <div className="row">
-                    <Sidebar />
-                    <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                        <div className="container mt-5">
-                            <h1 className="mb-4">Profile Akun</h1>
-                            <div className="row">
-                                <div className="col-md-4">
-                                    <div className="card">
-                                        <img
-                                            src={imagePreview || 'https://via.placeholder.com/300'}
-                                            alt="Foto Profil"
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = "https://via.placeholder.com/300";
-                                            }}
-                                            className="card-img-top"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-8">
-                                    <form onSubmit={handleSubmit}>
-                                        <div className="mb-3">
-                                            <label htmlFor="nik" className="form-label">NIK</label>
-                                            <input type="text" className="form-control" id="nik" name="nik" value={profile.nik} readOnly />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="nama" className="form-label">Nama Lengkap</label>
-                                            <input type="text" className="form-control" id="nama" name="nama" value={profile.nama} readOnly />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="email" className="form-label">Email</label>
-                                            <input type="email" className="form-control" id="email" name="email" value={profile.email} readOnly />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="foto" className="form-label">Foto Profil</label>
-                                            <input type="file" className="form-control" id="foto" name="foto" onChange={handleFileChange} accept="image/*" />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="tempat_lahir" className="form-label">Tempat Lahir</label>
-                                            <input type="text" className="form-control" id="tempat_lahir" name="tempat_lahir" value={profile.tempat_lahir} onChange={handleChange} />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="tanggal_lahir" className="form-label">Tanggal Lahir</label>
-                                            <input type="date" className="form-control" id="tanggal_lahir" name="tanggal_lahir" value={profile.tanggal_lahir} onChange={handleChange} />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="alamat" className="form-label">Alamat</label>
-                                            <input type="text" className="form-control" id="alamat" name="alamat" value={profile.alamat} onChange={handleChange} />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="telepon" className="form-label">Telepon</label>
-                                            <input type="tel" className="form-control" id="telepon" name="telepon" value={profile.telepon} onChange={handleChange} />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="provinsi" className="form-label">Provinsi</label>
-                                            <input type="text" className="form-control" id="provinsi" name="provinsi" value={profile.provinsi} onChange={handleChange} />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="pekerjaan" className="form-label">Pekerjaan</label>
-                                            <input type="text" className="form-control" id="pekerjaan" name="pekerjaan" value={profile.pekerjaan} onChange={handleChange} />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="penghasilan" className="form-label">Penghasilan</label>
-                                            <input type="number" className="form-control" id="penghasilan" name="penghasilan" value={profile.penghasilan} onChange={handleChange} />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="rekening" className="form-label">Rekening</label>
-                                            <input type="text" className="form-control" id="rekening" name="rekening" value={profile.rekening} onChange={handleChange} />
-                                        </div>
-                                        <button type="submit" className="btn btn-primary">Simpan</button>
-                                    </form>
-                                </div>
-                            </div>
+                    <div className="col-md-4">
+                        <div className="card">
+                            <img
+                                src={imagePreview || 'https://via.placeholder.com/300'}
+                                alt="Foto Profil"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = "https://via.placeholder.com/300";
+                                }}
+                                className="card-img-top"
+                            />
                         </div>
-                    </main>
+                    </div>
+                    <div className="col-md-8">
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-3">
+                                <label htmlFor="nik" className="form-label">NIK</label>
+                                <input type="text" className="form-control" id="nik" name="nik" value={profile.nik} readOnly />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="nama" className="form-label">Nama Lengkap</label>
+                                <input type="text" className="form-control" id="nama" name="nama" value={profile.nama} readOnly />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="email" className="form-label">Email</label>
+                                <input type="email" className="form-control" id="email" name="email" value={profile.email} readOnly />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="foto" className="form-label">Foto Profil</label>
+                                <input type="file" className="form-control" id="foto" name="foto" onChange={handleFileChange} accept="image/*" />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="tempat_lahir" className="form-label">Tempat Lahir</label>
+                                <input type="text" className="form-control" id="tempat_lahir" name="tempat_lahir" value={profile.tempat_lahir} onChange={handleChange} />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="tanggal_lahir" className="form-label">Tanggal Lahir</label>
+                                <input type="date" className="form-control" id="tanggal_lahir" name="tanggal_lahir" value={profile.tanggal_lahir} onChange={handleChange} />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="alamat" className="form-label">Alamat</label>
+                                <input type="text" className="form-control" id="alamat" name="alamat" value={profile.alamat} onChange={handleChange} />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="telepon" className="form-label">Telepon</label>
+                                <input type="tel" className="form-control" id="telepon" name="telepon" value={profile.telepon} onChange={handleChange} />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="provinsi" className="form-label">Provinsi</label>
+                                <input type="text" className="form-control" id="provinsi" name="provinsi" value={profile.provinsi} onChange={handleChange} />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="pekerjaan" className="form-label">Pekerjaan</label>
+                                <input type="text" className="form-control" id="pekerjaan" name="pekerjaan" value={profile.pekerjaan} onChange={handleChange} />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="penghasilan" className="form-label">Penghasilan</label>
+                                <input type="number" className="form-control" id="penghasilan" name="penghasilan" value={profile.penghasilan} onChange={handleChange} />
+                            </div>
+                            <div className="mb-3">
+                                <label htmlFor="rekening" className="form-label">Rekening</label>
+                                <input type="text" className="form-control" id="rekening" name="rekening" value={profile.rekening} onChange={handleChange} />
+                            </div>
+                            <button type="submit" className="btn btn-success">Simpan</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            </Container>
         </div>
+    </div>
     );
 };
 

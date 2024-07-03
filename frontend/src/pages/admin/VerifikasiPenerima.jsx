@@ -13,23 +13,25 @@ const VerifikasiPenerima = () => {
   const [selectedKeterangan, setSelectedKeterangan] = useState('');
   const [loading, setLoading] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://127.0.0.1:5000/admin/verifikasi-penerima', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setRegistrants(response.data);
+    } catch (error) {
+      setError('Ada masalah saat mengambil data. Pastikan Anda sudah login.');
+      console.error('Ada masalah saat mengambil data!', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://127.0.0.1:5000/admin/verifikasi-penerima', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setRegistrants(response.data);
-      } catch (error) {
-        setError('Ada masalah saat mengambil data. Pastikan Anda sudah login.');
-        console.error('Ada masalah saat mengambil data!', error);
-      }
-    };
-
     fetchData();
   }, []);
 
@@ -65,7 +67,7 @@ const VerifikasiPenerima = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://127.0.0.1:5000/admin/verifikasi-penerima-manfaat/update/${selectedRegistrant.userId}`,
+        `http://127.0.0.1:5000/admin/verifikasi-penerima-manfaat/update/${selectedRegistrant.id}`,
         {
           status: selectedStatus,
           keterangan: selectedKeterangan
@@ -79,13 +81,7 @@ const VerifikasiPenerima = () => {
       );
 
       if (response.status === 200) {
-        setRegistrants(prevRegistrants =>
-          prevRegistrants.map(reg =>
-            reg.userId === selectedRegistrant.userId
-              ? { ...reg, status: selectedStatus, keterangan: selectedKeterangan }
-              : reg
-          )
-        );
+        fetchData();
         setShowDetailsModal(false);
         setShowConfirmationModal(false);
       } else {
@@ -102,12 +98,17 @@ const VerifikasiPenerima = () => {
     setShowConfirmationModal(false);
   };
 
+  const handleSidebarToggle = (isVisible) => {
+    setIsSidebarVisible(isVisible);
+    console.log('Sidebar is visible:', isVisible);
+  };
+
   return (
-    <div className="d-flex">
-      <Sidebar />
-      <div className="flex-grow-1">
-        <Header />
-        <Container fluid className="p-4">
+    <div className="d-flex" style={{display:'flex', justifyContent:'center', width:'100%', alignItems:'center'}}>
+      <Sidebar onToggle={handleSidebarToggle}/>
+      <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{padding:'10px', width:'100%'}}>
+      <Header isSidebarVisible={isSidebarVisible} />
+        <Container className="p-4" style={{backgroundColor:'grey'}}>
           <h3>Verifikasi Penerima Bantuan Sosial</h3>
           <Table striped bordered hover>
             <thead>
@@ -246,7 +247,7 @@ const VerifikasiPenerima = () => {
           <Button variant="secondary" onClick={handleCloseDetailsModal}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={loading}>
+          <Button variant="success" onClick={handleSubmit} disabled={loading}>
             {loading ? 'Updating...' : 'Submit'}
           </Button>
         </Modal.Footer>

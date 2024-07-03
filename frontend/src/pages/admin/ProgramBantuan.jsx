@@ -10,6 +10,7 @@ const ProgramBantuan = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState(null);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [newProgram, setNewProgram] = useState({
     nama_bantuan: '',
     anggaran_per_paket: '',
@@ -110,14 +111,19 @@ const ProgramBantuan = () => {
     return <div>{error}</div>;
   }
 
+  const handleSidebarToggle = (isVisible) => {
+    setIsSidebarVisible(isVisible);
+    console.log('Sidebar is visible:', isVisible);
+  };
+
   return (
-    <div className="d-flex">
-      <Sidebar />
-      <div className="flex-grow-1">
-        <Header />
-        <Container fluid className="p-4">
+    <div className="d-flex" style={{display:'flex', justifyContent:'center', width:'100%', alignItems:'center', padding:'0px'}}>
+      <Sidebar onToggle={handleSidebarToggle}/>
+      <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{padding:'10px', width:'100%'}}>
+      <Header isSidebarVisible={isSidebarVisible} />
+        <Container className="p-4" style={{backgroundColor:'grey'}}>
           <h3>Program Bantuan Sosial</h3>
-          <Button variant="primary" className="mb-3" onClick={handleShowModal}>
+          <Button variant="success" className="mb-3" onClick={handleShowModal}>
             <i className="bi bi-plus me-2"></i>Tambahkan Data
           </Button>
           <Table striped bordered hover>

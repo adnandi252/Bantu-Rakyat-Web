@@ -28,4 +28,8 @@ transition: left 0.3s ease;
 .sidebar.hidden + .toggle-button {
 left: 10px;
 }
-  
+
+.sidebar .nav-link.active {
+  background-color: white;
+  font-weight: bold;
+}

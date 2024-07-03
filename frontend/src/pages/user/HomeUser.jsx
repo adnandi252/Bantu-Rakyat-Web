@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import { Container, Row, Col, Card, Alert } from 'react-bootstrap';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 
 const HomeUser = () => {
   const [dashboardData, setDashboardData] = useState({ total_packages: 0, jenis_bantuan: {} });
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const userId = localStorage.getItem('id');
-        const token = localStorage.getItem('token'); // Ambil token dari localStorage
+        const token = localStorage.getItem('token');
 
         if (!userId) {
           throw new Error('User ID tidak ditemukan di localStorage');
@@ -22,7 +23,7 @@ const HomeUser = () => {
 
         const response = await fetch(`http://127.0.0.1:5000/user/dashboard/${userId}`, {
           headers: {
-            'Authorization': `Bearer ${token}`, // Tambahkan token ke header Authorization
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
@@ -41,24 +42,33 @@ const HomeUser = () => {
     fetchDashboardData();
   }, []);
 
+  const handleSidebarToggle = (isVisible) => {
+    setIsSidebarVisible(isVisible);
+    console.log('Sidebar is visible:', isVisible);
+  };
+
   return (
-    <div className="d-flex">
-      <Sidebar />
-      <div className="flex-grow-1">
-        <Header />
-        <Container fluid>
-          <h3 className="mt-4">Paket Bantuan Diterima</h3>
-          <p>{dashboardData.total_packages} Paket</p>
-          <Row>
+    <div className="d-flex" style={{display:'flex', justifyContent:'center', width:'100%', alignItems:'center'}}>
+      <Sidebar onToggle={handleSidebarToggle}/>
+      <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{padding:'0px', width:'100%'}}>
+        <Header isSidebarVisible={isSidebarVisible} />
+        <Container className="p-4">
+          <Alert variant="success">
+            <h4>Selamat Datang di Website Bantuan Sosial</h4>
+            <p>Anda dapat melihat informasi paket bantuan yang telah diterima dan rincian jenis bantuan di bawah ini.</p>
+          </Alert>
+          <Alert variant="secondary" className="mt-4">
+          <h3>Paket Bantuan Diterima: <span style={{color:'blue'}}>{dashboardData.total_packages}</span></h3>
+          <Row className='mt-4'>
             <Col>
               <h3>Informasi Bantuan Diterima</h3>
               <Row>
                 {dashboardData.jenis_bantuan && Object.entries(dashboardData.jenis_bantuan).map(([namaBantuan, count]) => (
-                  <Col key={namaBantuan}>
-                    <Card>
+                  <Col key={namaBantuan} xs={12} sm={6} md={4} lg={4} className="mb-4">
+                    <Card className="h-100 shadow-sm">
                       <Card.Body>
                         <Card.Title>{namaBantuan}</Card.Title>
-                        <Card.Text>{count} paket</Card.Text>
+                        <Card.Text><span style={{color:'blue'}}>{count} paket</span></Card.Text>
                       </Card.Body>
                     </Card>
                   </Col>
@@ -66,6 +76,7 @@ const HomeUser = () => {
               </Row>
             </Col>
           </Row>
+          </Alert>
         </Container>
       </div>
     </div>
