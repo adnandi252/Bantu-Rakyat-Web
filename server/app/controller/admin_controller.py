@@ -103,6 +103,7 @@ class AdminController:
 
         data = [
             {
+                'id': penerima_manfaat.id,
                 'userId': user.id,
                 'nik': user.nik,
                 'email': user.email,
@@ -147,6 +148,7 @@ class AdminController:
 
         data = [
             {
+                'id': penerima_manfaat.id,
                 'userId': user.id,
                 'nik': user.nik,
                 'email': user.email,
@@ -287,7 +289,7 @@ class AdminController:
     def update_status_penerima_manfaat(id):
         data = request.get_json()
 
-        penerima_manfaat = PenerimaManfaat.query.filter_by(userId=id).first()
+        penerima_manfaat = PenerimaManfaat.query.filter_by(id=id).first()
 
         if penerima_manfaat is None:
             response = jsonify({'error': 'Penerima manfaat tidak ditemukan'})

@@ -5,7 +5,7 @@ from app.model.jadwal_penyaluran import JadwalPenyaluran
 from app.model.user import User
 from app.model.profile import Profile
 from app import db
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, or_
 from werkzeug.utils import secure_filename
 import os
 from app import app
@@ -34,23 +34,29 @@ class UserController:
     @staticmethod
     def get_dashboard_data(id):
         total_packages = db.session.query(
-        func.count(JadwalPenyaluran.id).label('total')
+            func.count(JadwalPenyaluran.id).label('total')
         ).join(PenerimaManfaat, JadwalPenyaluran.penerimaManfaatId == PenerimaManfaat.id) \
         .join(JenisBantuan, PenerimaManfaat.jenisBantuanId == JenisBantuan.id) \
         .filter(PenerimaManfaat.userId == id) \
         .filter(JadwalPenyaluran.status == 'selesai') \
         .scalar()
 
-        # Query to get the count of each jenis bantuan received by the user
         jenis_bantuan_counts = db.session.query(
             JenisBantuan.nama_bantuan,
             func.count(JadwalPenyaluran.id).label('count')
-        ).join(PenerimaManfaat, PenerimaManfaat.jenisBantuanId == JenisBantuan.id) \
-        .join(JadwalPenyaluran, JadwalPenyaluran.penerimaManfaatId == PenerimaManfaat.id) \
-        .filter(PenerimaManfaat.userId == id) \
-        .filter(JadwalPenyaluran.status == 'selesai') \
-        .group_by(JenisBantuan.nama_bantuan) \
-        .all()
+        ).outerjoin(
+            PenerimaManfaat,
+            PenerimaManfaat.jenisBantuanId == JenisBantuan.id
+        ).outerjoin(
+            JadwalPenyaluran,
+            (JadwalPenyaluran.penerimaManfaatId == PenerimaManfaat.id) & (JadwalPenyaluran.status == 'selesai')
+        ).filter(
+            PenerimaManfaat.userId == id
+        ).filter(
+            or_(PenerimaManfaat.status == 'aktif', PenerimaManfaat.status == 'nonaktif')
+        ).group_by(
+            JenisBantuan.nama_bantuan
+        ).all()
 
         jenis_bantuan_data = {bantuan.nama_bantuan: bantuan.count for bantuan in jenis_bantuan_counts}
 
@@ -64,7 +70,15 @@ class UserController:
     def get_lihat_program(id):
         programs = JenisBantuan.query.filter_by(status='aktif').all()
         penerima_manfaat = PenerimaManfaat.query.filter_by(userId=id).all()
-        user_programs = {pm.jenisBantuanId: {'status': pm.status, 'keterangan': pm.keterangan, 'dokumen': pm.dokumen} for pm in penerima_manfaat}
+        user_programs = {
+            pm.jenisBantuanId: {
+                'status': pm.status,
+                'keterangan': pm.keterangan,
+                'dokumen': pm.dokumen,
+                'penerimaManfaatId': pm.id  # Menggunakan kolom 'id' dari tabel PenerimaManfaat
+            }
+            for pm in penerima_manfaat
+        }
 
         programs_data = []
         for program in programs:
@@ -72,6 +86,7 @@ class UserController:
             status = user_program.get('status', 'Belum Didaftari')
             keterangan = user_program.get('keterangan', '')
             dokumen = user_program.get('dokumen', '')
+            penerimaManfaatId = user_program.get('penerimaManfaatId', None)
             programs_data.append({
                 'id': program.id,
                 'namaBantuan': program.nama_bantuan,
@@ -79,11 +94,11 @@ class UserController:
                 'deskripsi': program.deskripsi,
                 'status': status,
                 'keterangan': keterangan,
-                'dokumen': dokumen
+                'dokumen': dokumen,
+                'penerimaManfaatId': penerimaManfaatId  # Menyertakan 'penerimaManfaatId' dalam hasil
             })
 
         return jsonify(programs_data)
-
 
     @staticmethod
     def get_profile(id):
@@ -235,4 +250,20 @@ class UserController:
 
         return jsonify({
             'message': 'Status jadwal penyaluran berhasil diubah'
+        })
+    
+
+    @staticmethod
+    def ajukan_ulang_penerima_manfaat(id):
+        data = request.json
+
+        penerima_manfaat = PenerimaManfaat.query.filter_by(id=id).first()
+
+        penerima_manfaat.dokumen = data['dokumen']
+        penerima_manfaat.status = 'belum diverifikasi'
+
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Data penerima manfaat berhasil diajukan ulang'
         })

@@ -109,6 +109,11 @@ def update_penerima_manfaat(id):
 def delete_penerima_manfaat(id):
     return UserController.delete_penerima_manfaat(id)
 
+@app.route('/user/daftar-penerima-manfaat/ajukan-ulang/<string:id>', methods=['PUT'])
+@jwt_required()
+def ajukan_ulang_penerima_manfaat(id):
+    return UserController.ajukan_ulang_penerima_manfaat(id)
+
 @app.route('/user/jadwal-penyaluran/<string:id>', methods=['GET'])
 @jwt_required()
 def user_jadwal_penyaluran(id):
@@ -118,7 +123,6 @@ def user_jadwal_penyaluran(id):
 @jwt_required()
 def update_status_jadwal_penyaluran(id):
     return UserController.update_status_jadwal_penyaluran(id)
-
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
