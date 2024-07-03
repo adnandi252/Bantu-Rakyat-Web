@@ -54,7 +54,7 @@ const HomeAdmin = () => {
         <Container fluid>
           <Row>
             <Col>
-              <h3>Informasi Pendaftaran Bantuan Sosial</h3>
+              <h3>Informasi Verifikasi Penerima Bansos</h3>
               <Row>
                 <Col>
                   <Card>

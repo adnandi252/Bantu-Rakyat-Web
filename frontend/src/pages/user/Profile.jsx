@@ -135,9 +135,9 @@ const ProfilePage = () => {
     return (
         <div className="d-flex" style={{ justifyContent: 'center', width: '100%', alignItems: 'center' }}>
         <Sidebar onToggle={handleSidebarToggle} />
-        <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{ padding: '0px', marginBottom:'20px' }}>
+        <div className={`content-area ${isSidebarVisible ? 'visible' : 'hidden'}`} style={{ paddingTop: '15px',paddingRight:'20px',paddingLeft:'20px', marginBottom:'20px', width:'100%' }}>
             <Header isSidebarVisible={isSidebarVisible} />
-            <Container fluid className="p-4" style={{ backgroundColor: 'grey' }}>
+            <Container className="p-4" style={{ backgroundColor: 'grey' }}>
                 <h1 className="mb-4">Profile Akun</h1>
                 <div className="row">
                     <div className="col-md-4">
